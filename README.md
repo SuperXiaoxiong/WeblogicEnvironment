@@ -3,26 +3,38 @@
 Weblogic环境搭建过程很繁琐，很多时候需要测试各种Weblogic版本和各种JDK版本的排列组合，因此我写了一个脚本级别的Weblogic环境搭建工具，用于安全研究时节省大家搭建环境的时间。
 此环境搭建工具使用Docker和shell脚本，因此需要本机安装Docker才可以使用。经测试漏洞搭建工具可以在3分钟内构建出任意JDK版本搭配任意Weblogic版本，包含一个可远程调试的已启动的Weblogic Server域环境。
 
+相比于源项目添加了补丁安装
+
 ## 需求
 - 自动化安装任意版本JDK
 - 自动化安装任意版本Weblogic Server
 - 自动化创建域
 - 自动打开远程调试
 - 自动启动一个Weblogic Server域
+- 自动化安装补丁
 
 ## 流程
 
 ![](./images/2019-08-01-21-05-32.png)
 
+在启动 weblogic-server 之前添加补丁安装
+
 ## 使用方法：
 
 ### 下载JDK安装包和Weblogic安装包
 
-下载相应的JDK版本和Weblogic安装包，将JDK安装包放到`jdks/`目录下，将Weblogic安装包放到`weblogics/`目录下。**此步骤必须手动操作，否则无法进行后续步骤。**
+1. 下载相应的JDK版本和Weblogic安装包，将JDK安装包放到`jdks/`
+2. 目录下将Weblogic安装包放到`weblogics/`目录下。
+3. opatch 2021年1月更新过，需要安装新版的 opatch, 放置 opatch 目录下
+4. 将补丁安装至 patch_dir 补丁目录下
+
+**此步骤必须手动操作，否则无法进行后续步骤。**
 
 ![](./images/2019-08-01-16-34-18.png)
 
 ![](./images/2019-08-01-16-35-18.png)
+
+![](./images/2021-07-patch.jpg)
 
 JDK安装包下载地址：https://www.oracle.com/technetwork/java/javase/archive-139210.html
 Weblogic安装包下载地址：https://www.oracle.com/technetwork/middleware/weblogic/downloads/wls-for-dev-1703574.html
@@ -32,7 +44,7 @@ Weblogic安装包下载地址：https://www.oracle.com/technetwork/middleware/we
 回到根目录，执行Docker构建镜像命令：
 
 ```plain text
-docker build --build-arg JDK_PKG=<YOUR-JDK-PACKAGE-FILE-NAME> --build-arg WEBLOGIC_JAR=<YOUR-WEBLOGIC-PACKAGE-FILE-NAME>  -t <DOCKER-IMAGE-NAME> .
+docker build --build-arg JDK_PKG=<YOUR-JDK-PACKAGE-FILE-NAME> --build-arg WEBLOGIC_JAR=<YOUR-WEBLOGIC-PACKAGE-FILE-NAME>  --build-arg PATCH_PKG=xxxxxxx -t <DOCKER-IMAGE-NAME> .
 ```
 镜像构建完成后，执行以下命令运行：
 ```plain text
@@ -41,7 +53,7 @@ docker run -d -p 7001:7001 -p 8453:8453 -p 5556:5556 --name <CONTAINER-NAME> <DO
 
 以Weblogic12.1.3配JDK 7u21为例，构建镜像命令如下：
 ```plain text
-docker build --build-arg JDK_PKG=jdk-7u21-linux-x64.tar.gz --build-arg WEBLOGIC_JAR=fmw_12.1.3.0.0_wls.jar  -t weblogic12013jdk7u21 .
+docker build --build-arg JDK_PKG=jdk-7u21-linux-x64.tar.gz --build-arg WEBLOGIC_JAR=fmw_12.1.3.0.0_wls.jar --build-arg PATCH_PKG=xxxxxx -t weblogic12013jdk7u21 .
 ```
 镜像构建完成后，执行以下命令运行：
 ```plain text

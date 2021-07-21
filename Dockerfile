@@ -50,13 +50,14 @@ RUN /scripts/open_debug_mode.sh
 # 启动 Weblogic Server
 # CMD ["tail","-f","/dev/null"]
 
-# update opatch
 RUN chmod -R 777 /opatch_dir
 USER oracle
+# opatch 限制非 root 用户运行
 RUN /java/bin/java -jar opatch_generic.jar -silent oracle_home=/u01/app/oracle/middleware
+# 更新opatch
 WORKDIR /opatch_dir/$PATCH_PKG
-# CMD ["tail","-f","/dev/null"]
 RUN /u01/app/oracle/middleware/OPatch/opatch apply -silent
+# 更新weblogic-server
 
 USER root
 RUN rm  -rf /var/lib/apt/lists/*
