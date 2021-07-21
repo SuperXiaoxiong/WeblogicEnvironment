@@ -3,15 +3,17 @@ FROM centos
 # 参数
 ARG JDK_PKG
 ARG WEBLOGIC_JAR
+ARG PATCH_PKG
 # 解决libnsl包丢失的问题
-RUN yum -y install libnsl
+RUN yum -y install psmisc && yum -y install libnsl 
 
 # 创建用户
 RUN groupadd -g 1000 oinstall && useradd -u 1100 -g oinstall oracle
 # 创建需要的文件夹和环境变量
-RUN mkdir -p /install && mkdir -p /scripts
+RUN mkdir -p /install && mkdir -p /scriptsi && mkdir opatch_dir
 ENV JDK_PKG=$JDK_PKG
 ENV WEBLOGIC_JAR=$WEBLOGIC_JAR
+ENV PATCH_PKG=$PATCH_PKG
 
 # 复制脚本
 COPY scripts/jdk_install.sh /scripts/jdk_install.sh 
@@ -24,6 +26,9 @@ COPY scripts/create_domain12c.sh /scripts/create_domain12c.sh
 COPY scripts/open_debug_mode.sh /scripts/open_debug_mode.sh
 COPY jdks/$JDK_PKG .
 COPY weblogics/$WEBLOGIC_JAR .
+COPY opatch/opatch_generic.jar .
+COPY patch_dir/$PATCH_PKG /opatch_dir/$PATCH_PKG/
+
 
 # 判断jdk是包（bin/tar.gz）weblogic包（11g/12c）载入对应脚本
 RUN if [ $JDK_PKG == *.bin ] ; then echo ****载入JDK bin安装脚本**** && cp /scripts/jdk_bin_install.sh /scripts/jdk_install.sh ; else echo ****载入JDK tar.gz安装脚本**** ; fi
@@ -44,5 +49,16 @@ RUN /scripts/create_domain.sh
 RUN /scripts/open_debug_mode.sh
 # 启动 Weblogic Server
 # CMD ["tail","-f","/dev/null"]
+
+# update opatch
+RUN chmod -R 777 /opatch_dir
+USER oracle
+RUN /java/bin/java -jar opatch_generic.jar -silent oracle_home=/u01/app/oracle/middleware
+WORKDIR /opatch_dir/$PATCH_PKG
+# CMD ["tail","-f","/dev/null"]
+RUN /u01/app/oracle/middleware/OPatch/opatch apply -silent
+
+USER root
+RUN rm  -rf /var/lib/apt/lists/*
 CMD ["/u01/app/oracle/Domains/ExampleSilentWTDomain/bin/startWebLogic.sh"]
 EXPOSE 7001
