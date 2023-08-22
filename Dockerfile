@@ -1,11 +1,12 @@
 # 基础镜像
-FROM centos
+FROM centos:7
 # 参数
 ARG JDK_PKG
 ARG WEBLOGIC_JAR
 ARG PATCH_PKG
+# centos8 停止支持，换用centos7 不存在此问题
 # 解决libnsl包丢失的问题
-RUN yum -y install psmisc && yum -y install libnsl 
+# RUN yum -y install psmisc && yum -y install libnsl 
 
 # 创建用户
 RUN groupadd -g 1000 oinstall && useradd -u 1100 -g oinstall oracle
